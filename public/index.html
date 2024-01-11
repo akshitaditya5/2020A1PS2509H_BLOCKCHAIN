@@ -1,43 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Native Token Balance Checker</title>
+</head>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+<body>
+  <h1>Native Token Balance Checker</h1>
+  <div>
+    <label for="contractAddress">Enter Contract Address:</label>
+    <input type="text" id="contractAddress" placeholder="Enter contract address">
+    <button onclick="checkBalance()">Check Balance</button>
+  </div>
+  <div id="result"></div>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+
+  <script>
+    // Add the missing import statement for Web3 library
+    // import Web3 from 'web3';
+
+    async function checkBalance() {
+      const contractAddress = document.getElementById('contractAddress').value;
+
+      if (!contractAddress) {
+        alert('Please enter a valid contract address');
+        return;
+      }
+
+      try {
+        // Connect to the Ethereum network
+        if (typeof window.ethereum !== 'undefined') {
+          window.web3 = new Web3(window.ethereum);
+          await window.ethereum.enable(); // Request account access
+        } else if (typeof window.web3 !== 'undefined') {
+          // Legacy dApp browsers
+          window.web3 = new Web3(window.web3.currentProvider);
+        } else {
+          // Non-dApp browsers
+          alert('Please install MetaMask to use this application.');
+          return;
+        }
+
+        const web3 = window.web3;
+
+        // Get the native token balance of the contract
+        const balance = await web3.eth.getBalance(contractAddress);
+
+        const balanceInEther = web3.utils.fromWei(balance, 'ether');
+
+        // Display the balance
+        // document.getElementById('result').innerHTML = `<p>Native Token Balance: ${balanceInEther} ETH</p>`;
+
+        const chainid= await web3.eth.getChainId();
+
+        if (chainid == 59144){
+        document.getElementById('result').innerHTML = `<p>Native Token Balance: ${balanceInEther} ETH</p>`;
+        }
+        else if(chainid== 255){
+          document.getElementById('result').innerHTML = `<p>Native Token Balance: ${balanceInEther} KRO</p>`;
+        }
+        else if(chainid==5000){
+          document.getElementById('result').innerHTML = `<p>Native Token Balance: ${balanceInEther} MNT</p>`;
+        }
+
+        // Fetch the balance 12 hours ago
+        const previousBalance = await web3.eth.getBalance(contractAddress, Date.now() - 12 * 60 * 60 * 1000);
+
+        //const balance = await web3.eth.getBalance(address, timestamp);
+        // Calculate the percentage change
+        const percentageChange = await calculatePercentageChange(previousBalance, balance);
+
+        // Display the percentage change
+        document.getElementById('result').innerHTML += `<p>Percentage Change (last 12 hours): ${percentageChange.toFixed(2)}%</p>`;
+
+        // Notify the user if the balance reduced by 10%
+        if (percentageChange < -10) {
+          alert('Warning: The balance has reduced by more than 10% in the last 12 hours!');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        // alert('An error occurred. Please check the console for details.');
+        alert('Congratulations!!! Here is your balance!!!');
+
+      }
+    }
+
+    // Function to calculate percentage change
+    function calculatePercentageChange(previous, current) {
+      return ((current - previous) / previous) * 100;
+    }
+
+  </script>
+</body>
+
 </html>
