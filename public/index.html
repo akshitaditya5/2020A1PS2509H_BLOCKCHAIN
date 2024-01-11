@@ -1,45 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 
+<!-- color coding and design -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Native Token Balance Checker</title>
+  <title> Balance Checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&family=Roboto+Slab&display=swap" rel="stylesheet">
+  <style>
+    body {text-align: center; height: 100vh; background: #035096; background: linear-gradient(to bottom, #035096 0%, #004187 100%); background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #035096), color-stop(100%, #004187)); background: -webkit-linear-gradient(top, #035096 0%, #004187 100%); background: -moz-linear-gradient(top, #035096 0%, #004187 100%); background: -o-linear-gradient(top, #035096 0%, #004187 100%); background: -ms-linear-gradient(top, #035096 0%, #004187 100%); filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#035096', endColorstr='#004187', GradientType=0); border: 1px solid #003278; box-shadow: inset 0 1px 0 #125FA5; -webkit-box-shadow: inset 0 1px 0 #125FA5; -moz-box-shadow: inset 0 1px 0 #125FA5;}
+    h1   {color: aliceblue; text-decoration: underline; text-decoration-color: aliceblue; font-size: 3rem; font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;}
+    label {color: aliceblue; font-size: 1.5rem; font-family: 'Roboto Slab', serif;}
+    input {font-family: 'Nanum Gothic', sans-serif; border-radius: 5px; padding: 6px 5px; margin: 8px; border: 3px solid white; -webkit-transition: 0.5s; transition: 0.5s; outline: none;}
+    input:focus {padding: 6px 5px; margin: 8px; border: 3px solid #0aadff; -webkit-transition: 0.5s; transition: 0.5s; outline: none;}
+    button {background-color: #0aadff; border: none; border-radius: 5px; color: aliceblue; padding: 16px 32px; text-decoration: none; margin: 4px 2px; cursor: pointer; font-size: 15px; -webkit-transition: 0.5s; transition: 0.5s; outline: none;}
+    button:hover {background-color: #088dcf; -webkit-transition: 0.5s; transition: 0.5s; outline: none;}
+    #result {color: aliceblue; font-size: 1.5rem; font-family: 'Roboto Slab', serif;}
+
+  </style>
 </head>
 
 <body>
-  <h1>Native Token Balance Checker</h1>
+  <h1>Mantle Kroma Linea</h1>
   <div>
     <label for="contractAddress">Enter Contract Address:</label>
     <input type="text" id="contractAddress" placeholder="Enter contract address">
-    <button onclick="checkBalance()">Check Balance</button>
+    <br/><br/>
+    <button onclick="checkBalanceToken()">Check Balance</button>
   </div>
   <div id="result"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
 
   <script>
-    // Add the missing import statement for Web3 library
-    // import Web3 from 'web3';
 
-    async function checkBalance() {
+    async function checkBalanceToken() {
       const contractAddress = document.getElementById('contractAddress').value;
 
       if (!contractAddress) {
-        alert('Please enter a valid contract address');
+        alert('Not a valid contract address,please enter a valid contract address');
         return;
       }
 
       try {
-        // Connect to the Ethereum network
+        // Connecting to the Ethereum network
         if (typeof window.ethereum !== 'undefined') {
           window.web3 = new Web3(window.ethereum);
-          await window.ethereum.enable(); // Request account access
+          // Requesting account access
+          await window.ethereum.enable(); 
         } else if (typeof window.web3 !== 'undefined') {
-          // Legacy dApp browsers
+          // when metamask is there
           window.web3 = new Web3(window.web3.currentProvider);
         } else {
-          // Non-dApp browsers
+          //if metamask is not present 
           alert('Please install MetaMask to use this application.');
           return;
         }
@@ -51,33 +66,31 @@
 
         const balanceInEther = web3.utils.fromWei(balance, 'ether');
 
-        // Display the balance
-        // document.getElementById('result').innerHTML = `<p>Native Token Balance: ${balanceInEther} ETH</p>`;
+        // here we are displaying the balance
 
         const chainid= await web3.eth.getChainId();
 
-        if (chainid == 59144){
+        if (chainid == 59144){ //for linea corresponding to the chain id
         document.getElementById('result').innerHTML = `<p>Native Token Balance: ${balanceInEther} ETH</p>`;
         }
-        else if(chainid== 255){
+        else if(chainid== 255){  //for kroma corresponding to the chain id
           document.getElementById('result').innerHTML = `<p>Native Token Balance: ${balanceInEther} KRO</p>`;
         }
-        else if(chainid==5000){
+        else if(chainid==5000){ //for mantle corresponding to the chain id
           document.getElementById('result').innerHTML = `<p>Native Token Balance: ${balanceInEther} MNT</p>`;
         }
 
-        // Fetch the balance 12 hours ago
+        //measure of time in milliseconds
         const previousBalance = await web3.eth.getBalance(contractAddress, Date.now() - 12 * 60 * 60 * 1000);
 
-        //const balance = await web3.eth.getBalance(address, timestamp);
-        // Calculate the percentage change
-        const percentageChange = await calculatePercentageChange(previousBalance, balance);
+        // %change calculation
+        const percentageChangeValue = await calculatePercentageChange(previousBalance, balance);
 
-        // Display the percentage change
-        document.getElementById('result').innerHTML += `<p>Percentage Change (last 12 hours): ${percentageChange.toFixed(2)}%</p>`;
+        // Displaying the percentage change
+        document.getElementById('result').innerHTML += `<p>Percentage Change in the (last 12 hours): ${percentageChangeValue.toFixed(2)}%</p>`;
 
         // Notify the user if the balance reduced by 10%
-        if (percentageChange < -10) {
+        if (percentageChangeValue < -10) {
           alert('Warning: The balance has reduced by more than 10% in the last 12 hours!');
         }
       } catch (error) {
